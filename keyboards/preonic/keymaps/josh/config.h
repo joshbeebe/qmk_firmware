@@ -1,2 +1,2 @@
 #undef TAPPING_TERM
-#define TAPPING_TERM 100
+#define TAPPING_TERM 99

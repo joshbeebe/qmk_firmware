@@ -26,9 +26,16 @@ enum preonic_layers {
   _ADJUST,
   _ENTER,
   _ENTER2,
-  _NUMPAD
+  _NUMPAD,
+  DYNAMIC_MACRO_RANGE,
 };
+#include "dynamic_macro.h"
 
+#define M1_REC  DYN_REC_START1
+#define M2_REC  DYN_REC_START2
+#define M1_PLAY DYN_MACRO_PLAY1
+#define M2_PLAY DYN_MACRO_PLAY2
+#define M_STOP  DYN_REC_STOP
 
 enum preonic_keycodes {
   QWERTY = SAFE_RANGE,
@@ -175,8 +182,8 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 ),
 [_ENTER2] = LAYOUT_preonic_grid( \
   KC_F11,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F12,  \
-  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,  \
-  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+  _______, _______, _______, M2_REC,  M1_REC,  M_STOP,  _______, _______, _______, _______, _______, _______,  \
+  _______, _______, _______, M2_PLAY, M1_PLAY, _______, _______, _______, _______, _______, _______, _______, \
   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
   _______, _______, _______, _______, _______, _______, KC_ENT,  _______, _______, _______, _______, _______  \
 ),
@@ -191,7 +198,10 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
-  switch (keycode) {
+    if (!process_record_dynamic_macro(keycode, record)) {
+        return false;
+    }
+    switch (keycode) {
         case QWERTY:
           if (record->event.pressed) {
             set_single_persistent_default_layer(_QWERTY);
