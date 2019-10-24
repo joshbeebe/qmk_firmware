@@ -17,6 +17,10 @@
 #include QMK_KEYBOARD_H
 #include "muse.h"
 
+#define ALT_TAB_TIMEOUT 1000u    /* Timeout for single key alt-tab */
+bool is_alt_tab_active = FALSE; /* For single key alt-tab */
+uint16_t alt_tab_timer = 0u;    /* For single key alt-tab */
+
 enum preonic_layers {
   _QWERTY,
   _LOWER,
@@ -32,6 +36,7 @@ enum preonic_keycodes {
   QWERTY = SAFE_RANGE,
   LOWER,
   RAISE,
+  ALT_TAB,
   DYNAMIC_MACRO_RANGE
 };
 #include "dynamic_macro.h"
@@ -67,7 +72,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,                KC_Y,               KC_U,    KC_I,    KC_O,    KC_P,    KC_DEL,  \
   KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                KC_H,               KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT, \
   KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                KC_N,               KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,  \
-  KC_LCTL, KC_LCTL, KC_LGUI, KC_LALT, LOWER,   LT(_ENTER2,KC_SPC),  LT(_ENTER,KC_SPC),  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT  \
+  KC_LCTL, ALT_TAB, KC_LGUI, KC_LALT, LOWER,   LT(_ENTER2,KC_SPC),  LT(_ENTER,KC_SPC),  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT  \
 ),
 
 /* Lower
@@ -183,31 +188,45 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     }
     switch (keycode) {
         case QWERTY:
-          if (record->event.pressed) {
-            set_single_persistent_default_layer(_QWERTY);
-          }
-          return false;
-          break;
+            if (record->event.pressed) {
+                set_single_persistent_default_layer(_QWERTY);
+            }
+            return false;
+            break;
         case LOWER:
-          if (record->event.pressed) {
-            layer_on(_LOWER);
-            update_tri_layer(_LOWER, _RAISE, _ADJUST);
-          } else {
-            layer_off(_LOWER);
-            update_tri_layer(_LOWER, _RAISE, _ADJUST);
-          }
-          return false;
-          break;
+            if (record->event.pressed) {
+                layer_on(_LOWER);
+                update_tri_layer(_LOWER, _RAISE, _ADJUST);
+            } else {
+                layer_off(_LOWER);
+                update_tri_layer(_LOWER, _RAISE, _ADJUST);
+            }
+            return false;
+            break;
         case RAISE:
-          if (record->event.pressed) {
-            layer_on(_RAISE);
-            update_tri_layer(_LOWER, _RAISE, _ADJUST);
-          } else {
-            layer_off(_RAISE);
-            update_tri_layer(_LOWER, _RAISE, _ADJUST);
-          }
-          return false;
-          break;
+            if (record->event.pressed) {
+                layer_on(_RAISE);
+                update_tri_layer(_LOWER, _RAISE, _ADJUST);
+            } else {
+                layer_off(_RAISE);
+                update_tri_layer(_LOWER, _RAISE, _ADJUST);
+            }
+            return false;
+            break;
+        case ALT_TAB:
+            if (record->event.pressed) {
+                if (!is_alt_tab_active) {
+                    is_alt_tab_active = TRUE;
+                    register_code(KC_LALT);
+                }
+                wait_ms(100);
+                alt_tab_timer = timer_read();
+                register_code(KC_TAB);
+            } else {
+                unregister_code(KC_TAB);
+            }
+            return false;
+            break;
       }
     return true;
 };
@@ -264,6 +283,12 @@ void dip_switch_update_user(uint8_t index, bool active) {
 
 
 void matrix_scan_user(void) {
+    if (is_alt_tab_active) {
+        if (timer_elapsed(alt_tab_timer) > ALT_TAB_TIMEOUT) {
+            unregister_code(KC_LALT);
+            is_alt_tab_active = FALSE;
+        }
+    }
 #ifdef AUDIO_ENABLE
     if (muse_mode) {
         if (muse_counter == 0) {
