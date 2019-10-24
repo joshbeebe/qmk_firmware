@@ -19,32 +19,34 @@
 
 enum preonic_layers {
   _QWERTY,
-  _COLEMAK,
-  _DVORAK,
   _LOWER,
   _RAISE,
   _ADJUST,
   _ENTER,
   _ENTER2,
-  _NUMPAD,
-  DYNAMIC_MACRO_RANGE,
+  _NUMPAD
 };
-#include "dynamic_macro.h"
 
-#define M1_REC  DYN_REC_START1
-#define M2_REC  DYN_REC_START2
-#define M1_PLAY DYN_MACRO_PLAY1
-#define M2_PLAY DYN_MACRO_PLAY2
-#define M_STOP  DYN_REC_STOP
 
 enum preonic_keycodes {
   QWERTY = SAFE_RANGE,
-  COLEMAK,
-  DVORAK,
   LOWER,
-  RAISE
+  RAISE,
+  DYNAMIC_MACRO_RANGE
 };
+#include "dynamic_macro.h"
+#define M1_REC DYN_REC_START1
+#define M2_REC DYN_REC_START2
+#define M1_PLAY DYN_MACRO_PLAY1
+#define M2_PLAY DYN_MACRO_PLAY2
+#define M_STOP DYN_REC_STOP
 
+#ifdef AUDIO_ENABLE
+    #include "audio.h"
+    float tone_macro1_record[][2]     = SONG(CAPS_LOCK_ON_SOUND);
+    float tone_macro2_record[][2]     = SONG(SCROLL_LOCK_ON_SOUND);
+    float tone_macro_record_stop[][2] = SONG(SCROLL_LOCK_OFF_SOUND);
+#endif
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 /* Qwerty
@@ -68,48 +70,6 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_LCTL, KC_LCTL, KC_LGUI, KC_LALT, LOWER,   LT(_ENTER2,KC_SPC),  LT(_ENTER,KC_SPC),  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT  \
 ),
 
-/* Colemak
- * ,-----------------------------------------------------------------------------------.
- * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Tab  |   Q  |   W  |   F  |   P  |   G  |   J  |   L  |   U  |   Y  |   ;  | Del  |
- * |------+------+------+------+------+-------------+------+------+------+------+------|
- * | Esc  |   A  |   R  |   S  |   T  |   D  |   H  |   N  |   E  |   I  |   O  |  "   |
- * |------+------+------+------+------+------|------+------+------+------+------+------|
- * | Shift|   Z  |   X  |   C  |   V  |   B  |   K  |   M  |   ,  |   .  |   /  |Enter |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
- * `-----------------------------------------------------------------------------------'
- */
-[_COLEMAK] = LAYOUT_preonic_grid( \
-  KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC, \
-  KC_TAB,  KC_Q,    KC_W,    KC_F,    KC_P,    KC_G,    KC_J,    KC_L,    KC_U,    KC_Y,    KC_SCLN, KC_DEL,  \
-  KC_ESC,  KC_A,    KC_R,    KC_S,    KC_T,    KC_D,    KC_H,    KC_N,    KC_E,    KC_I,    KC_O,    KC_QUOT, \
-  KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,    KC_K,    KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_ENT,  \
-  _______, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT  \
-),
-
-/* Dvorak
- * ,-----------------------------------------------------------------------------------.
- * |   `  |   1  |   2  |   3  |   4  |   5  |   6  |   7  |   8  |   9  |   0  | Bksp |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Tab  |   "  |   ,  |   .  |   P  |   Y  |   F  |   G  |   C  |   R  |   L  | Del  |
- * |------+------+------+------+------+-------------+------+------+------+------+------|
- * | Esc  |   A  |   O  |   E  |   U  |   I  |   D  |   H  |   T  |   N  |   S  |  /   |
- * |------+------+------+------+------+------|------+------+------+------+------+------|
- * | Shift|   ;  |   Q  |   J  |   K  |   X  |   B  |   M  |   W  |   V  |   Z  |Enter |
- * |------+------+------+------+------+------+------+------+------+------+------+------|
- * | Brite| Ctrl | Alt  | GUI  |Lower |    Space    |Raise | Left | Down |  Up  |Right |
- * `-----------------------------------------------------------------------------------'
- */
-[_DVORAK] = LAYOUT_preonic_grid( \
-  KC_GRV,  KC_1,    KC_2,    KC_3,    KC_4,    KC_5,    KC_6,    KC_7,    KC_8,    KC_9,    KC_0,    KC_BSPC, \
-  KC_TAB,  KC_QUOT, KC_COMM, KC_DOT,  KC_P,    KC_Y,    KC_F,    KC_G,    KC_C,    KC_R,    KC_L,    KC_DEL,  \
-  KC_ESC,  KC_A,    KC_O,    KC_E,    KC_U,    KC_I,    KC_D,    KC_H,    KC_T,    KC_N,    KC_S,    KC_SLSH, \
-  KC_LSFT, KC_SCLN, KC_Q,    KC_J,    KC_K,    KC_X,    KC_B,    KC_M,    KC_W,    KC_V,    KC_Z,    KC_ENT,  \
-  _______, KC_LCTL, KC_LALT, KC_LGUI, LOWER,   KC_SPC,  KC_SPC,  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT  \
-),
-
 /* Lower
  * ,-----------------------------------------------------------------------------------.
  * |   ~  |   !  |   @  |   #  |   $  |   %  |   ^  |   &  |   *  |   (  |   )  | Bksp |
@@ -124,7 +84,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
  * `-----------------------------------------------------------------------------------'
  */
 [_LOWER] = LAYOUT_preonic_grid( \
-  TG(_NUMPAD), _______, _______, _______, _______, _______, _______, _______, _______, _______, KC_PSCR, KC_BSPC, \
+  TG(_NUMPAD), DYN_REC_START1, DYN_REC_STOP, DYN_MACRO_PLAY1, _______, _______, _______, _______, _______, _______, KC_PSCR, KC_BSPC, \
   _______,     _______, _______, _______, _______, _______, _______, KC_EQL,  _______, _______, _______, KC_DEL,  \
   KC_CAPS,     KC_LCBR, KC_LBRC, KC_LT,   KC_LPRN, KC_MINS, KC_PLUS, KC_RPRN, KC_GT,   KC_RBRC, KC_RCBR, KC_PIPE, \
   _______,     _______, _______, _______, _______, _______, _______, _______, _______, KC_HOME, KC_END, _______, \
@@ -199,24 +159,32 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!process_record_dynamic_macro(keycode, record)) {
+// Play sound on Macro stop
+#ifdef AUDIO_ENABLE
+        switch (keycode) {
+            case DYN_REC_STOP:
+                if (record->event.pressed) {
+                    PLAY_SONG(tone_macro_record_stop);
+                }
+                break;
+            case DYN_REC_START1:
+                if (record->event.pressed) {
+                    PLAY_SONG(tone_macro1_record);
+                }
+                break;
+            case DYN_REC_START2:
+                if (record->event.pressed) {
+                    PLAY_SONG(tone_macro2_record);
+                }
+                break;
+        }
+#endif
         return false;
     }
     switch (keycode) {
         case QWERTY:
           if (record->event.pressed) {
             set_single_persistent_default_layer(_QWERTY);
-          }
-          return false;
-          break;
-        case COLEMAK:
-          if (record->event.pressed) {
-            set_single_persistent_default_layer(_COLEMAK);
-          }
-          return false;
-          break;
-        case DVORAK:
-          if (record->event.pressed) {
-            set_single_persistent_default_layer(_DVORAK);
           }
           return false;
           break;
