@@ -17,6 +17,13 @@
 #include QMK_KEYBOARD_H
 #include "muse.h"
 
+/* Used for correct highlighting in VsCode */
+#ifdef __INTELLISENSE__
+    #include "../../rev3/config.h"
+    #include "../../rev3/rev3.h"
+    #define AUDIO_ENABLE
+#endif
+
 #define ALT_TAB_TIMEOUT 1000u    /* Timeout for single key alt-tab */
 bool is_alt_tab_active = FALSE; /* For single key alt-tab */
 uint16_t alt_tab_timer = 0u;    /* For single key alt-tab */
@@ -26,8 +33,8 @@ enum preonic_layers {
   _LOWER,
   _RAISE,
   _ADJUST,
-  _ENTER,
-  _ENTER2,
+  _LOWER2,
+  _RAISE2,
   _NUMPAD
 };
 
@@ -72,7 +79,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   KC_TAB,  KC_Q,    KC_W,    KC_E,    KC_R,    KC_T,                KC_Y,               KC_U,    KC_I,    KC_O,    KC_P,    KC_DEL,  \
   KC_ESC,  KC_A,    KC_S,    KC_D,    KC_F,    KC_G,                KC_H,               KC_J,    KC_K,    KC_L,    KC_SCLN, KC_QUOT, \
   KC_LSFT, KC_Z,    KC_X,    KC_C,    KC_V,    KC_B,                KC_N,               KC_M,    KC_COMM, KC_DOT,  KC_SLSH, KC_RSFT,  \
-  KC_LCTL, ALT_TAB, KC_LGUI, KC_LALT, LOWER,   LT(_ENTER2,KC_SPC),  LT(_ENTER,KC_SPC),  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT  \
+  KC_LCTL, ALT_TAB, KC_LGUI, KC_LALT, LOWER,   LT(_LOWER2,KC_SPC),  LT(_RAISE2,KC_SPC),  RAISE,   KC_LEFT, KC_DOWN, KC_UP,   KC_RGHT  \
 ),
 
 /* Lower
@@ -138,24 +145,25 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
 
-[_ENTER] = LAYOUT_preonic_grid( \
+[_RAISE2] = LAYOUT_preonic_grid( \
   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,  \
-  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,  \
-  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
-  _______, _______, _______, _______, _______, KC_ENT,  _______, _______, _______, _______, _______, _______  \
-),
-[_ENTER2] = LAYOUT_preonic_grid( \
-  KC_F11,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F12,  \
   _______, _______, _______, M2_REC,  M1_REC,  M_STOP,  _______, _______, _______, _______, _______, _______,  \
   _______, _______, _______, M2_PLAY, M1_PLAY, _______, _______, _______, _______, _______, _______, _______, \
   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+  _______, _______, _______, _______, _______, KC_ENT,  _______, _______, _______, _______, _______, _______  \
+),
+[_LOWER2] = LAYOUT_preonic_grid( \
+  KC_F11,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F12,  \
+  _______, _______, _______, KC_END,  _______, _______, _______, KC_PGUP, _______, _______, _______, _______, \
+  _______, KC_HOME, _______, KC_PGDN, _______, _______, _______, _______, _______, _______, _______, _______, \
+  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
   _______, _______, _______, _______, _______, _______, KC_ENT,  _______, _______, _______, _______, _______  \
 ),
+/* Mouse keys on wasd, scrolling on rf, clicking on eq3 */
 [_NUMPAD] = LAYOUT_preonic_grid( \
-  _______, _______, _______, _______, _______, _______, _______, _______, KC_NUMLOCK, KC_KP_SLASH, KC_KP_ASTERISK, KC_KP_MINUS,  \
-  _______, _______, _______, _______, _______, _______, _______, _______, KC_KP_7,    KC_KP_8,     KC_KP_9,        KC_KP_PLUS,  \
-  _______, _______, _______, _______, _______, _______, _______, _______, KC_KP_4,    KC_KP_5,     KC_KP_6,        KC_KP_PLUS, \
+  _______, _______, KC_BTN3, _______, _______, _______, _______, _______, KC_NUMLOCK, KC_KP_SLASH, KC_KP_ASTERISK, KC_KP_MINUS,  \
+  _______, KC_BTN2, KC_MS_U, KC_BTN1, KC_WH_U, _______, _______, _______, KC_KP_7,    KC_KP_8,     KC_KP_9,        KC_KP_PLUS,  \
+  _______, KC_MS_L, KC_MS_D, KC_MS_R, KC_WH_D, _______, _______, _______, KC_KP_4,    KC_KP_5,     KC_KP_6,        KC_KP_PLUS, \
   _______, _______, _______, _______, _______, _______, _______, _______, KC_KP_1,    KC_KP_2,     KC_KP_3,        KC_KP_ENTER, \
   _______, _______, _______, _______, _______, _______, _______, _______, KC_KP_0,    KC_KP_0,     KC_KP_DOT,      KC_KP_ENTER  \
 ),
