@@ -163,6 +163,27 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
+    if (keycode == ALT_TAB) {
+        /* Single key alt-tab */
+        if (record->event.pressed) {
+            if (!is_alt_tab_active) {
+                is_alt_tab_active = TRUE;
+                register_code(KC_LALT);
+            }
+            wait_ms(100); /* Wait so windows has time to register alt before tab */
+            alt_tab_timer = timer_read();
+            register_code(KC_TAB);
+        } else {
+            unregister_code(KC_TAB);
+        }
+        return false;
+    } else {
+        /* Stop single key alt-tab if a new key is pressed. */
+        if (is_alt_tab_active) {
+            is_alt_tab_active = FALSE;
+            unregister_code(KC_LALT);
+        }
+    }
     if (!process_record_dynamic_macro(keycode, record)) {
 // Play sound on Macro stop
 #ifdef AUDIO_ENABLE
@@ -210,20 +231,6 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             } else {
                 layer_off(_RAISE);
                 update_tri_layer(_LOWER, _RAISE, _ADJUST);
-            }
-            return false;
-            break;
-        case ALT_TAB:
-            if (record->event.pressed) {
-                if (!is_alt_tab_active) {
-                    is_alt_tab_active = TRUE;
-                    register_code(KC_LALT);
-                }
-                wait_ms(100);
-                alt_tab_timer = timer_read();
-                register_code(KC_TAB);
-            } else {
-                unregister_code(KC_TAB);
             }
             return false;
             break;
