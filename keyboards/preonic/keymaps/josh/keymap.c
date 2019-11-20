@@ -39,6 +39,10 @@ enum preonic_layers {
 };
 
 
+enum macros {
+  CUT,
+  CPY
+};
 enum preonic_keycodes {
   QWERTY = SAFE_RANGE,
   LOWER,
@@ -144,7 +148,9 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   _______, MUV_DE,  MUV_IN,  MU_ON,   MU_OFF,  MI_ON,   MI_OFF,  _______, _______, _______, _______, _______, \
   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______  \
 ),
-
+/*
+ * Recordable macros, and enter on opposite space key
+ */
 [_RAISE2] = LAYOUT_preonic_grid( \
   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______,  \
   _______, _______, _______, M2_REC,  M1_REC,  M_STOP,  _______, _______, _______, _______, _______, _______,  \
@@ -152,11 +158,14 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
   _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
   _______, _______, _______, _______, _______, KC_ENT,  _______, _______, _______, _______, _______, _______  \
 ),
+/*
+ * F keys, navigation, enter on opposite spoace, and single-key cut & copy
+ */
 [_LOWER2] = LAYOUT_preonic_grid( \
   KC_F11,  KC_F1,   KC_F2,   KC_F3,   KC_F4,   KC_F5,   KC_F6,   KC_F7,   KC_F8,   KC_F9,   KC_F10,  KC_F12,  \
   _______, _______, _______, KC_END,  _______, _______, _______, KC_PGUP, _______, _______, _______, _______, \
   _______, KC_HOME, _______, KC_PGDN, _______, _______, _______, _______, _______, _______, _______, _______, \
-  _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, _______, \
+  _______, _______, M(CUT),  M(CPY),  _______, _______, _______, _______, _______, _______, _______, _______, \
   _______, _______, _______, _______, _______, _______, KC_ENT,  _______, _______, _______, _______, _______  \
 ),
 /* Mouse keys on wasd, scrolling on rf, clicking on eq3 */
@@ -246,56 +255,25 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     return true;
 };
 
-bool muse_mode = false;
-uint8_t last_muse_note = 0;
-uint16_t muse_counter = 0;
-uint8_t muse_offset = 70;
-uint16_t muse_tempo = 50;
-
-void encoder_update_user(uint8_t index, bool clockwise) {
-  if (muse_mode) {
-    if (IS_LAYER_ON(_RAISE)) {
-      if (clockwise) {
-        muse_offset++;
-      } else {
-        muse_offset--;
-      }
-    } else {
-      if (clockwise) {
-        muse_tempo+=1;
-      } else {
-        muse_tempo-=1;
-      }
-    }
-  } else {
-    if (clockwise) {
-      register_code(KC_PGDN);
-      unregister_code(KC_PGDN);
-    } else {
-      register_code(KC_PGUP);
-      unregister_code(KC_PGUP);
-    }
-  }
-}
-
-void dip_switch_update_user(uint8_t index, bool active) {
-    switch (index) {
-        case 0:
-            if (active) {
-                layer_on(_ADJUST);
+const macro_t* action_get_macro(keyrecord_t* record, uint8_t id, uint8_t opt) {
+    switch (id) {
+        case CPY: {
+            if (record->event.pressed) {
+                return MACRO( D(LCTRL), T(C), U(LCTL), END);
             } else {
-                layer_off(_ADJUST);
+                return MACRO( D(LCTRL), T(V), U(LCTL), END);
             }
-            break;
-        case 1:
-            if (active) {
-                muse_mode = true;
+        }
+        case CUT: {
+            if (record->event.pressed) {
+                return MACRO( D(LCTRL), T(X), U(LCTL), END);
             } else {
-                muse_mode = false;
+                return MACRO( D(LCTRL), T(V), U(LCTL), END);
             }
+        }
     }
+    return MACRO_NONE;
 }
-
 
 void matrix_scan_user(void) {
     if (is_alt_tab_active) {
@@ -304,24 +282,6 @@ void matrix_scan_user(void) {
             is_alt_tab_active = FALSE;
         }
     }
-#ifdef AUDIO_ENABLE
-    if (muse_mode) {
-        if (muse_counter == 0) {
-            uint8_t muse_note = muse_offset + SCALE[muse_clock_pulse()];
-            if (muse_note != last_muse_note) {
-                stop_note(compute_freq_for_midi_note(last_muse_note));
-                play_note(compute_freq_for_midi_note(muse_note), 0xF);
-                last_muse_note = muse_note;
-            }
-        }
-        muse_counter = (muse_counter + 1) % muse_tempo;
-    } else {
-        if (muse_counter) {
-            stop_all_notes();
-            muse_counter = 0;
-        }
-    }
-#endif
 }
 
 bool music_mask_user(uint16_t keycode) {
